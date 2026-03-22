@@ -1,5 +1,6 @@
 import firebase_admin
 from firebase_admin import credentials, firestore
+from google.cloud.firestore_v1.base_query import FieldFilter
 
 cred = credentials.Certificate("/Users/jackmurdock/Documents/sprint5-librarydb-firebase-adminsdk-fbsvc-81621e5243.json")
 firebase_admin.initialize_app(cred)
@@ -96,7 +97,7 @@ def library_setup():
 def author_books(author_id):
     search_id = author_id.lower().replace(" ", "_")
     print (f"\nBooks by {author_id}:")
-    books = db.collection("books").where("author_id", "==", author_id).stream()
+    books = db.collection("books").where(filter=FieldFilter("author_id", "==", search_id)).get()
     if books:
         for book in books:
             data = book.to_dict()
@@ -104,17 +105,17 @@ def author_books(author_id):
     else:
         print("No books found :(")
 def update_year(title, new_year):
-    books = db.collection("books").where("title", "==", title).limit(1).get()
+    books = db.collection("books").where(filter=FieldFilter("title", "==", title)).limit(1).get()
     if len(books)>0:
         db.collection("books").document(books[0].id).update({"year": new_year})
         print (f"\nYear for {title} changed to {new_year}.")
     else:
         print(f"{title} not found.")
 def delete_book(title):
-    books = db.collection("books").where("title", "==", title).get()
+    books = db.collection("books").where(filter=FieldFilter("title", "==", title)).get()
     for book in books: 
         db.collection("books").document(book.id).delete()
-        print("\nDeleted: {title}")
+        print(f"\nDeleted: {title}")
 
 print("Welcome to Library DB.")
 if(len(db.collection("books").limit(1).get())== 0):
@@ -124,11 +125,11 @@ else:
     print("\n Database found!")
 a = input("Type in the name of an author to find their books: ")
 author_books(a)
-#print("Let's check out Beowulf.")
-#author_books("seamus_heaney")
-#print("Whoops! Beowulf wasn't actually written then!!! (only this translation)")
-#update_year("Beowulf", 700)
-#print("You know what? Let's just get rid of it.")
-#delete_book("Beowulf")
-#author_books("seamus_heaney")
-#print("That's better.")
+print("\nLet's check out Beowulf.")
+author_books("Seamus Heaney")
+print("Whoops! Beowulf wasn't actually written then!!! (only this translation)")
+update_year("Beowulf", 700)
+print("You know what? Let's just get rid of it.")
+delete_book("Beowulf")
+author_books("Seamus Heaney")
+print("That's better.")
